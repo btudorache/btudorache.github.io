@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Name - Portfolio</title>
+    <title>Bogdan Tudorache - Portfolio</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         :root {
@@ -86,12 +86,50 @@
             opacity: 0.9;
         }
         
+        .section {
+            margin-bottom: 60px;
+        }
+        
+        .contact-icons {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 60px;
+        }
+        
+        .contact-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            background-color: rgba(67, 100, 232, 0.1);
+            border-radius: 50%;
+            color: var(--color-text);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+        
+        .contact-icon:hover {
+            background-color: rgba(67, 100, 232, 0.2);
+            transform: translateY(-5px);
+            border-color: rgba(67, 100, 232, 0.3);
+            box-shadow: 0 5px 15px rgba(67, 100, 232, 0.2);
+        }
+        
+        .icon {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+        
         .card {
             background-color: var(--color-card);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
             border-radius: 16px;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
             padding: 30px;
             position: relative;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
@@ -105,54 +143,56 @@
             border-color: rgba(67, 100, 232, 0.3);
         }
         
-        .card-header {
-            margin-bottom: 20px;
-        }
-        
-        .card-title {
-            font-size: 1.5rem;
+        .section-title {
+            font-size: 1.8rem;
             font-weight: 600;
             color: var(--color-secondary);
-            margin-bottom: 5px;
+            margin-bottom: 30px;
+            text-align: center;
         }
         
-        .card-content {
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 30px;
+        }
+        
+        .project-card {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .project-card-header {
+            margin-bottom: 15px;
+        }
+        
+        .project-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--color-text);
+            margin-bottom: 10px;
+        }
+        
+        .project-description {
             color: var(--color-text-secondary);
+            margin-bottom: 20px;
+            flex-grow: 1;
         }
         
-        .social-links {
+        .tech-tags {
             display: flex;
-            justify-content: center;
             flex-wrap: wrap;
-            gap: 15px;
-            margin-top: 15px;
+            gap: 8px;
+            margin-top: auto;
         }
         
-        .social-link {
-            display: flex;
-            align-items: center;
-            padding: 12px 20px;
+        .tech-tag {
+            padding: 5px 12px;
             background-color: rgba(67, 100, 232, 0.1);
             border-radius: 50px;
-            color: var(--color-text);
-            text-decoration: none;
-            transition: all 0.3s ease;
-            font-weight: 500;
-            border: 1px solid transparent;
-        }
-        
-        .social-link:hover {
-            background-color: rgba(67, 100, 232, 0.2);
-            transform: translateY(-3px);
-            border-color: rgba(67, 100, 232, 0.3);
-            box-shadow: 0 5px 15px rgba(67, 100, 232, 0.2);
-        }
-        
-        .social-icon {
-            width: 20px;
-            height: 20px;
-            margin-right: 10px;
-            fill: currentColor;
+            font-size: 0.8rem;
+            color: var(--color-text-secondary);
         }
         
         .button {
@@ -166,9 +206,8 @@
             transition: all 0.3s ease;
             box-shadow: 0 4px 20px rgba(67, 100, 232, 0.3);
             border: none;
-            margin: 0 auto;
+            margin: 20px auto 0;
             text-align: center;
-            max-width: 300px;
             width: 100%;
         }
         
@@ -215,18 +254,8 @@
                 font-size: 3.5rem;
             }
             
-            .social-links {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .social-link {
-                width: 100%;
-                justify-content: center;
-            }
-            
-            .button {
-                width: 100%;
+            .projects-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -240,39 +269,111 @@
     
     <div class="container">
         <div class="header">
-            <h1 class="title">Your Name</h1>
-            <div class="subtitle">Software Engineer & Explorer</div>
+            <h1 class="title">Bogdan Tudorache</h1>
+            <div class="subtitle">Software Engineer</div>
+            <p class="subtitle">systems engineering, ai/ml, operating systems, web dev</p>
         </div>
         
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title">Contact</h2>
-            </div>
-            <div class="card-content">
-                <div class="social-links">
-                    <a href="https://github.com/yourusername" class="social-link" target="_blank">
-                        <svg class="social-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                        </svg>
-                        GitHub
-                    </a>
-                    <a href="https://linkedin.com/in/yourprofile" class="social-link" target="_blank">
-                        <svg class="social-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                            <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
-                        </svg>
-                        LinkedIn
-                    </a>
-                    <a href="mailto:your.email@example.com" class="social-link">
-                        <svg class="social-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                            <path d="M0 3v18h24v-18h-24zm21.518 2l-9.518 7.713-9.518-7.713h19.036zm-19.518 14v-11.817l10 8.104 10-8.104v11.817h-20z"/>
-                        </svg>
-                        Email
-                    </a>
+        <div class="contact-icons">
+            <a href="https://github.com/yourusername" class="contact-icon" target="_blank" title="GitHub">
+                <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                </svg>
+            </a>
+            <a href="https://linkedin.com/in/yourprofile" class="contact-icon" target="_blank" title="LinkedIn">
+                <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                </svg>
+            </a>
+            <a href="mailto:your.email@example.com" class="contact-icon" title="Email">
+                <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M0 3v18h24v-18h-24zm21.518 2l-9.518 7.713-9.518-7.713h19.036zm-19.518 14v-11.817l10 8.104 10-8.104v11.817h-20z"/>
+                </svg>
+            </a>
+        </div>
+        
+        <section class="section">
+            <h2 class="section-title">Projects</h2>
+            <div class="projects-grid">
+                <div class="card project-card">
+                    <div class="project-card-header">
+                        <h3 class="project-title">MyHoard</h3>
+                    </div>
+                    <p class="project-description">A personal movie collection manager built with React and Node.js. Track your watched films, organize them by category, and get recommendations based on your viewing history.</p>
+                    <div class="tech-tags">
+                        <span class="tech-tag">React</span>
+                        <span class="tech-tag">Node.js</span>
+                        <span class="tech-tag">MongoDB</span>
+                    </div>
+                    <a href="https://github.com/btudorache/myHoard" class="button" target="_blank">View Project</a>
+                </div>
+                
+                <div class="card project-card">
+                    <div class="project-card-header">
+                        <h3 class="project-title">Artbazar</h3>
+                    </div>
+                    <p class="project-description">An online marketplace for artists to showcase and sell their work. Features user authentication, artwork galleries, and secure payment processing.</p>
+                    <div class="tech-tags">
+                        <span class="tech-tag">Django</span>
+                        <span class="tech-tag">PostgreSQL</span>
+                        <span class="tech-tag">JavaScript</span>
+                    </div>
+                    <a href="https://github.com/btudorache/artbazar" class="button" target="_blank">View Project</a>
+                </div>
+                
+                <div class="card project-card">
+                    <div class="project-card-header">
+                        <h3 class="project-title">Leaderboard.ro</h3>
+                    </div>
+                    <p class="project-description">A competitive programming training platform with automated testing, progress tracking, and leaderboards. Helps programmers prepare for technical interviews and coding competitions.</p>
+                    <div class="tech-tags">
+                        <span class="tech-tag">Flask</span>
+                        <span class="tech-tag">Python</span>
+                        <span class="tech-tag">SQL</span>
+                    </div>
+                    <a href="https://github.com/btudorache/leaderboard" class="button" target="_blank">View Project</a>
+                </div>
+
+                <div class="card project-card">
+                    <div class="project-card-header">
+                        <h3 class="project-title">myPAL</h3>
+                    </div>
+                    <p class="project-description">A personal assistant web application that helps you organize tasks, set reminders, and track goals with a clean, intuitive interface. Features calendar integration and productivity analytics.</p>
+                    <div class="tech-tags">
+                        <span class="tech-tag">Spring Boot</span>
+                        <span class="tech-tag">Java</span>
+                        <span class="tech-tag">Thymeleaf</span>
+                    </div>
+                    <a href="https://github.com/btudorache/myPAL" class="button" target="_blank">View Project</a>
+                </div>
+
+                <div class="card project-card">
+                    <div class="project-card-header">
+                        <h3 class="project-title">PAO-Lab</h3>
+                    </div>
+                    <p class="project-description">A comprehensive collection of advanced Object-Oriented Programming exercises and solutions in Java. Demonstrates design patterns, SOLID principles, and best practices for Java development.</p>
+                    <div class="tech-tags">
+                        <span class="tech-tag">Java</span>
+                        <span class="tech-tag">OOP</span>
+                        <span class="tech-tag">Design Patterns</span>
+                    </div>
+                    <a href="https://github.com/btudorache/PAO-Lab" class="button" target="_blank">View Project</a>
+                </div>
+
+                <div class="card project-card">
+                    <div class="project-card-header">
+                        <h3 class="project-title">TSS Diagnosis Tool</h3>
+                    </div>
+                    <p class="project-description">A machine learning-based diagnostic tool for Toxic Shock Syndrome that processes patient data and provides risk assessments. Uses advanced algorithms to identify risk factors and potential complications.</p>
+                    <div class="tech-tags">
+                        <span class="tech-tag">Python</span>
+                        <span class="tech-tag">scikit-learn</span>
+                        <span class="tech-tag">Pandas</span>
+                    </div>
+                    <a href="https://github.com/btudorache/TSS-Diagnosis-Tool" class="button" target="_blank">View Project</a>
                 </div>
             </div>
-        </div>
-        
-        <a href="https://github.com/yourusername?tab=repositories" class="button" target="_blank">View Projects</a>
+        </section>
     </div>
 
     <!-- Use an external JavaScript file -->
