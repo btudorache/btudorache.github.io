@@ -1,10 +1,10 @@
 // The page folds itself into an owl.
 //
-// A square sheet of two-colour paper (cream on the front, terracotta on the back)
-// is folded, one crease at a time, into the owl from the origamiok.com diagram:
-// a small beak pinch, side bands, a head band, diagonal wings, then the ear tufts
-// pulled out of the top corners. Every step is a real hinge rotation about a crease,
-// so the sheet is always one connected piece of paper.
+// A square sheet of two-colour paper (terracotta on the front, cream on the back)
+// is folded, one crease at a time, into Hsi-Min Tai's owl (2019): the sheet sits
+// corner-up, the chest and crown tuck behind, the wings and cheeks fold back, and
+// the chin, ears, eyes and beak are pulled out from between the layers. Every step
+// is a hinge rotation about a crease, so the sheet stays one connected piece of paper.
 //
 // The sheet is a set of convex polygons. Each stage splits the polygons along its
 // crease and mirrors the moving side; at render time the moving side is rotated
@@ -16,39 +16,51 @@ const EPS = 0.0025;              // paper thickness, in sheet units (sheet is 1 
 const CREAM = 0xf8f1e4;
 const TERRACOTTA = 0xb85a36;
 
-// ---------- crease sequence (sheet coords, cream side up, y up) ----------
+// ---------- crease sequence (sheet coords, terracotta side up, y up) ----------
 
 const movedIn = (p, k) => p.moved.has(k);
-const isBase = p => p.moved.size === 0;                                   // never folded: the sheet itself
-const isHeadBandTop = p => movedIn(p, 2) && !movedIn(p, 0) && !movedIn(p, 1); // the band's top layer
-const inBox = (c, x0, x1, y0, y1) => c[0] > x0 && c[0] < x1 && c[1] > y0 && c[1] < y1;
+const isBase = p => p.moved.size === 0;                       // never folded: the face itself
+const onlyMovedIn = (p, k) => p.moved.size === 1 && movedIn(p, k);
+// isosceles triangle with apex (ax, ay) and a base of half-width hw on the line y = by
+const inTri = (c, ax, ay, by, hw) => {
+    const t = (c[1] - ay) / (by - ay);   // 0 at the apex, 1 at the base
+    return t > 0 && t < 1 && Math.abs(c[0] - ax) < hw * t;
+};
 
 // Each stage: a crease line (point a, direction d), which side moves (toward),
-// optional seams to cut first, and an optional filter picking which layers fold.
-// The beak, eyes and ears are "pulled out" details: only one layer moves.
+// back: true for a mountain fold, optional seams to cut first, and an optional
+// filter picking which layers fold. The chin, ears, eyes and beak move one layer only.
 const stages = [
-    { name: 'left side',  a: [-0.35, 0],    d: [0, 1],       toward: [-0.5, 0] },
-    { name: 'right side', a: [0.35, 0],     d: [0, 1],       toward: [0.5, 0] },
-    { name: 'head band',  a: [0, 0.35],     d: [1, 0],       toward: [0, 0.5] },
-    { name: 'left wing',  a: [-0.35, -0.2], d: [0.2, -0.3],  toward: [-0.35, -0.5] },
-    { name: 'right wing', a: [0.35, -0.2],  d: [-0.2, -0.3], toward: [0.35, -0.5] },
-    { name: 'beak',       a: [0, 0.2],      d: [1, 0],       toward: [0, 0.3],
-      cuts: [{ a: [0, 0.27], d: [1, 1] }, { a: [0, 0.27], d: [1, -1] }],
-      filter: (p, c) => isBase(p) && c[1] > 0.2 && c[1] < 0.27 - Math.abs(c[0]) },
-    // eyes: a square of the band's top layer sinks back into the head (a mountain fold)
-    { name: 'left eye',   a: [0, 0.215],    d: [1, 0],       toward: [0, 0.3], back: true,
-      cuts: [{ a: [-0.32, 0], d: [0, 1] }, { a: [-0.18, 0], d: [0, 1] }, { a: [0, 0.33], d: [1, 0] }],
-      filter: (p, c) => isHeadBandTop(p) && inBox(c, -0.32, -0.18, 0.215, 0.33) },
-    { name: 'right eye',  a: [0, 0.215],    d: [1, 0],       toward: [0, 0.3], back: true,
-      cuts: [{ a: [0.32, 0], d: [0, 1] }, { a: [0.18, 0], d: [0, 1] }],
-      filter: (p, c) => isHeadBandTop(p) && inBox(c, 0.18, 0.32, 0.215, 0.33) },
-    // ears: the sheet's own top corners, pulled out from under the band
-    { name: 'left ear',   a: [0, 0.35],     d: [1, 0],       toward: [0, 0],
-      cuts: [{ a: [-0.35, 0.25], d: [1, 1] }],
-      filter: (p, c) => isBase(p) && c[0] < -0.25 && c[1] > 0.25 && c[1] > c[0] + 0.6 },
-    { name: 'right ear',  a: [0, 0.35],     d: [1, 0],       toward: [0, 0],
-      cuts: [{ a: [0.35, 0.25], d: [1, -1] }],
-      filter: (p, c) => isBase(p) && c[0] > 0.25 && c[1] > 0.25 && c[1] > -c[0] + 0.6 },
+    { name: 'chest',       a: [0, -0.3],         d: [1, 0],          toward: [0, -0.7],    back: true },
+    { name: 'crown',       a: [0, 0.3],          d: [1, 0],          toward: [0, 0.7],     back: true },
+    // chin: a triangle of the face sinks back, showing the cream chest tucked behind it
+    { name: 'chin',        a: [0, -0.1],         d: [1, 0],          toward: [0, -0.3],    back: true,
+      cuts: [{ a: [-0.19, -0.1], d: [0.19, -0.2] }, { a: [0.19, -0.1], d: [-0.19, -0.2] }],
+      filter: (p, c) => isBase(p) && inTri(c, 0, -0.3, -0.1, 0.19) },
+    { name: 'left wing',   a: [-0.44, 0.3],      d: [0.14, -0.6],    toward: [-0.7, 0],    back: true },
+    { name: 'right wing',  a: [0.44, 0.3],       d: [-0.14, -0.6],   toward: [0.7, 0],     back: true },
+    { name: 'left cheek',  a: [-0.14, -0.3],     d: [-0.3, 0.33],    toward: [-0.5, -0.4], back: true },
+    { name: 'right cheek', a: [0.14, -0.3],      d: [0.3, 0.33],     toward: [0.5, -0.4],  back: true },
+    // ears: the corners of the crown, pulled out from behind the top edge
+    { name: 'ears',        a: [0, 0.3],          d: [1, 0],          toward: [0, 0],
+      cuts: [{ a: [-0.18, 0.3], d: [-0.12, -0.107] }, { a: [0.18, 0.3], d: [0.12, -0.107] }],
+      filter: (p, c) => onlyMovedIn(p, 1) && Math.abs(c[0]) > 0.18 && c[1] > 0.3 - (Math.abs(c[0]) - 0.18) * 0.892 },
+    // eyes: two rounded windows of the face sink back, showing the cream crown behind them
+    { name: 'eyes',        a: [0, 0.22],         d: [1, 0],          toward: [0, 0],       back: true,
+      cuts: [{ a: [0, 0.15], d: [1, 0] },
+             { a: [-0.26, 0.22], d: [0.04, -0.07] }, { a: [-0.06, 0.22], d: [-0.04, -0.07] },
+             { a: [0.26, 0.22], d: [-0.04, -0.07] }, { a: [0.06, 0.22], d: [0.04, -0.07] }],
+      filter: (p, c) => isBase(p) && c[1] > 0.15 && c[1] < 0.22 &&
+          Math.abs(Math.abs(c[0]) - 0.16) < 0.06 + 0.04 * (c[1] - 0.15) / 0.07 },
+    // pupils: two small points of the crown, pulled forward into the eyes
+    { name: 'pupils',      a: [0, 0.22],         d: [1, 0],          toward: [0, 0.3],
+      cuts: [{ a: [-0.19, 0.22], d: [0.03, 0.04] }, { a: [-0.13, 0.22], d: [-0.03, 0.04] },
+             { a: [0.19, 0.22], d: [-0.03, 0.04] }, { a: [0.13, 0.22], d: [0.03, 0.04] }],
+      filter: (p, c) => onlyMovedIn(p, 1) && (inTri(c, -0.16, 0.26, 0.22, 0.03) || inTri(c, 0.16, 0.26, 0.22, 0.03)) },
+    // beak: a small point of the chest, pulled forward onto the chin
+    { name: 'beak',        a: [0, -0.1],         d: [1, 0],          toward: [0, 0],
+      cuts: [{ a: [-0.035, -0.1], d: [0.035, 0.055] }, { a: [0.035, -0.1], d: [-0.035, 0.055] }],
+      filter: (p, c) => onlyMovedIn(p, 0) && inTri(c, 0, -0.045, -0.1, 0.035) },
 ];
 
 // ---------- 2D helpers ----------
@@ -114,7 +126,8 @@ function splitPoly(poly, L) {
 // ---------- build the fold model ----------
 
 function buildModel() {
-    const square = [[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5]];
+    const h = Math.SQRT1_2;   // the sheet sits corner-up
+    const square = [[0, -h], [h, 0], [0, h], [-h, 0]];
     let polys = [{ v: square.map(p => ({ p, f: p.slice() })), layer: 0, rec: [], moved: new Set() }];
 
     const lines = stages.map(lineOf);
@@ -219,10 +232,10 @@ export function mountOwl(stage, opts = {}) {
     geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
     const mat = new THREE.MeshStandardMaterial({
-        color: CREAM, roughness: 0.94, metalness: 0, side: THREE.DoubleSide, flatShading: true,
+        color: TERRACOTTA, roughness: 0.94, metalness: 0, side: THREE.DoubleSide, flatShading: true,
     });
     mat.onBeforeCompile = sh => {
-        sh.uniforms.uBack = { value: new THREE.Color(TERRACOTTA) };
+        sh.uniforms.uBack = { value: new THREE.Color(CREAM) };
         sh.fragmentShader = 'uniform vec3 uBack;\n' + sh.fragmentShader.replace(
             '#include <color_fragment>',
             '#include <color_fragment>\n\tif (!gl_FrontFacing) diffuseColor.rgb = uBack;'
@@ -326,7 +339,7 @@ export function mountOwl(stage, opts = {}) {
 
         // watch the folding from over the shoulder, then settle in front of the owl
         const done = easeInOut(clamp(t / nStages, 0, 1));
-        camera.position.set(-1.25 * (1 - done), 1.35 - 1.0 * done, 2.15 + 0.15 * done);
+        camera.position.set(-1.25 * (1 - done), 1.35 - 1.0 * done, 2.75 - 0.45 * done);
         camera.lookAt(0, -0.02, 0);
         renderer.render(scene, camera);
     }
