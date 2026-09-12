@@ -73,7 +73,8 @@ const BEAK_INK = 0xa94f2e;
 // so the outer part comes forward and its tip settles slightly downward. Paper
 // held inside the body stays flat (the bend fades in over WING_EDGE_FADE outside
 // the body edge). The wing is tessellated into strips so the bend is smooth.
-const isWing = p => movedIn(p, 6) || movedIn(p, 8);
+const isWing = p => movedIn(p, 6) || movedIn(p, 8);      // the outer wing: bent by the curl
+const isWingFlap = p => movedIn(p, 5) || movedIn(p, 7);  // the whole wing flap, pleat included
 const WING_AXIS_A = [0.056, 0.054];            // lower corner, right wing (mirror for left)
 const WING_AXIS_D = [-0.35, 1];                // axis direction, right wing
 const WING_STRIP = 0.06;
@@ -191,13 +192,13 @@ function buildModel() {
         for (let m = 1; m * WING_STRIP < 0.6; m++) {
             const a = [sx * WING_AXIS_A[0] + n[0] * m * WING_STRIP, WING_AXIS_A[1] + n[1] * m * WING_STRIP];
             const C = lineOf({ a, d });
-            polys = polys.flatMap(p => isWing(p) ? splitPoly(p, C) : [p]);
+            polys = polys.flatMap(p => isWingFlap(p) ? splitPoly(p, C) : [p]);
         }
         // and across the strips, so no piece is long enough to go visibly non-planar
         for (let m = -6; m <= 8; m++) {
             const a = [sx * WING_AXIS_A[0] + d[0] / len * m * WING_STRIP, WING_AXIS_A[1] + d[1] / len * m * WING_STRIP];
             const C = lineOf({ a, d: n });
-            polys = polys.flatMap(p => isWing(p) ? splitPoly(p, C) : [p]);
+            polys = polys.flatMap(p => isWingFlap(p) ? splitPoly(p, C) : [p]);
         }
     }
 
@@ -238,9 +239,19 @@ function buildModel() {
         for (let k = 0; k < stages.length; k++) if (a.has(k) !== b.has(k)) return k;
         return Infinity;
     };
+    // an edge is part of the sheet's outline only if it lies along one side of the square
+    const onOutline = (a, b) => {
+        const side = q => (Math.abs(Math.abs(q[0]) + Math.abs(q[1]) - H) < 1e-6) ? (Math.sign(q[0]) || 1) * 2 + (Math.sign(q[1]) || 1) : 0;
+        const sa = side(a), sb = side(b);
+        return sa !== 0 && (sa === sb || Math.abs(a[0]) < 1e-9 || Math.abs(a[1]) < 1e-9 || Math.abs(b[0]) < 1e-9 || Math.abs(b[1]) < 1e-9);
+    };
     const edges = [];
     for (const list of edgeMap.values()) {
-        if (list.length === 1) { edges.push({ ...list[0], since: -1 }); continue; }
+        if (list.length === 1) {
+            const e = list[0], pv = polys[e.pi].v;
+            if (onOutline(pv[e.i].p, pv[e.j].p)) edges.push({ ...e, since: -1 });
+            continue;
+        }
         const [e0, e1] = list;
         const since = firstDifference(polys[e0.pi].moved, polys[e1.pi].moved);
         if (since !== Infinity) edges.push({ ...e0, since }, { ...e1, since });
