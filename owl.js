@@ -59,13 +59,27 @@ const stages = [
     { name: 'turn back',          turn: true, dur: 0.45 },
 ];
 
-// Eyes, in final model coords on the cream band, mapped back to the sheet:
-// the band is the front layer (mirrored by step 1) folded down by step 3.
-const EYES = [[-0.1 * H, 0.64 * H], [0.1 * H, 0.64 * H]].map(([x, y]) => {
-    const beforeBand = 2 * 0.69 * H - y;     // undo step 3
-    return [x, -beforeBand];                 // undo step 1
-});
+// Ink drawn on at the end (step 15 of the tutorial): two eyes and a beak on the
+// cream band. Given in final model coords and mapped back to the sheet: the band
+// is the front layer (mirrored by step 1) folded down by step 3.
+const toSheet = ([x, y]) => [x, -(2 * 0.69 * H - y)];
+const EYES = [[-0.1 * H, 0.64 * H], [0.1 * H, 0.64 * H]].map(toSheet);
 const EYE_R = 0.036 * H;
+const BEAK = [[-0.03 * H, 0.625 * H], [0.03 * H, 0.625 * H], [0, 0.596 * H]].map(toSheet);
+const BEAK_INK = 0xa94f2e;
+
+// Wing curl (step 14, "gently curl out the wings"): each wing bends as a cylinder
+// about an axis through its lower corner at the body, leaning inward at the top,
+// so the outer part comes forward and its tip settles slightly downward. Paper
+// held inside the body stays flat (the bend fades in over WING_EDGE_FADE outside
+// the body edge). The wing is tessellated into strips so the bend is smooth.
+const isWing = p => movedIn(p, 6) || movedIn(p, 8);
+const WING_AXIS_A = [0.056, 0.054];            // lower corner, right wing (mirror for left)
+const WING_AXIS_D = [-0.35, 1];                // axis direction, right wing
+const WING_STRIP = 0.06;
+const WING_EDGE_FADE = [0.01, 0.10];
+const WING_KAPPA = 1.15;                       // curvature at full curl
+const bodyEdgeX = y => K1_BASE + K1_DIR[0] * y;   // the k1 crease: body outline
 
 // ---------- 2D helpers ----------
 
@@ -169,12 +183,39 @@ function buildModel() {
         }
     });
 
+    // tessellate the wings into strips parallel to their curl axis
+    for (const sx of [1, -1]) {
+        const d = [sx * WING_AXIS_D[0], WING_AXIS_D[1]];
+        const len = Math.hypot(d[0], d[1]);
+        const n = [sx * d[1] / len, -sx * d[0] / len];       // outward normal
+        for (let m = 1; m * WING_STRIP < 0.6; m++) {
+            const a = [sx * WING_AXIS_A[0] + n[0] * m * WING_STRIP, WING_AXIS_A[1] + n[1] * m * WING_STRIP];
+            const C = lineOf({ a, d });
+            polys = polys.flatMap(p => isWing(p) ? splitPoly(p, C) : [p]);
+        }
+        // and across the strips, so no piece is long enough to go visibly non-planar
+        for (let m = -6; m <= 8; m++) {
+            const a = [sx * WING_AXIS_A[0] + d[0] / len * m * WING_STRIP, WING_AXIS_A[1] + d[1] / len * m * WING_STRIP];
+            const C = lineOf({ a, d: n });
+            polys = polys.flatMap(p => isWing(p) ? splitPoly(p, C) : [p]);
+        }
+    }
+
     // flat coordinates of every polygon before each stage
     for (const p of polys) {
         p.fAt = [p.v.map(v => v.p)];
         for (let k = 0; k < stages.length; k++) {
             const prev = p.fAt[k];
             p.fAt[k + 1] = p.rec[k].m ? prev.map(f => mirror(f, lines[k])) : prev;
+        }
+        // Fan-triangulate from a corner chosen by position, so the two paper layers
+        // of a wing (identical polygons, possibly listed from different corners) get
+        // the same triangles and stay parallel when bent.
+        const fin = p.fAt[stages.length];
+        p.hub = 0;
+        for (let k = 1; k < fin.length; k++) {
+            const a = fin[k], b = fin[p.hub];
+            if (a[0] < b[0] - 1e-9 || (Math.abs(a[0] - b[0]) <= 1e-9 && a[1] < b[1])) p.hub = k;
         }
     }
     // Paper edges worth drawing: the sheet boundary, and edges between two pieces
@@ -207,28 +248,79 @@ function buildModel() {
     return { polys, lines, edges };
 }
 
-// ---------- paper texture: cream with the eyes printed on ----------
+// ---------- paper texture: cream, with the eyes and beak inked on at the end ----------
 
 function makePaperTexture() {
     const size = 1024;
     const canvas = document.createElement('canvas');
     canvas.width = canvas.height = size;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#' + CREAM.toString(16).padStart(6, '0');
-    ctx.fillRect(0, 0, size, size);
+    const hex = c => '#' + c.toString(16).padStart(6, '0');
     const toPx = ([x, y]) => [(x / (2 * H) + 0.5) * size, (0.5 - y / (2 * H)) * size];
-    for (const e of EYES) {
+    const r = EYE_R / (2 * H) * size;
+    const seg = (u, a, b) => clamp((u - a) / (b - a), 0, 1);
+
+    // a marker drawing an eye: outline first, then fill, then the highlight
+    function eye(e, v) {
+        if (v <= 0) return;
         const [cx, cy] = toPx(e);
-        const r = EYE_R / (2 * H) * size;
-        ctx.fillStyle = '#' + INK.toString(16).padStart(6, '0');
-        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath(); ctx.arc(cx - r * 0.33, cy - r * 0.33, r * 0.28, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = ctx.fillStyle = hex(INK);
+        ctx.lineCap = 'round';
+        ctx.lineWidth = r * 0.5;
+        const outline = seg(v, 0, 0.5), fill = seg(v, 0.5, 1);
+        ctx.beginPath();
+        ctx.arc(cx, cy, r * 0.75, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * outline);
+        ctx.stroke();
+        if (fill > 0) {
+            ctx.beginPath(); ctx.arc(cx, cy, r * fill, 0, Math.PI * 2); ctx.fill();
+        }
+        if (v >= 1) {
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath(); ctx.arc(cx - r * 0.33, cy - r * 0.33, r * 0.28, 0, Math.PI * 2); ctx.fill();
+        }
     }
+
+    // the beak: the marker runs round the triangle, then fills it
+    const beakPx = BEAK.map(toPx);
+    function beak(v) {
+        if (v <= 0) return;
+        const pts = [...beakPx, beakPx[0]];
+        const lens = pts.slice(1).map((q, i) => Math.hypot(q[0] - pts[i][0], q[1] - pts[i][1]));
+        const total = lens.reduce((a, b) => a + b, 0);
+        let left = seg(v, 0, 0.7) * total;
+        ctx.strokeStyle = ctx.fillStyle = hex(BEAK_INK);
+        ctx.lineCap = ctx.lineJoin = 'round';
+        ctx.lineWidth = r * 0.35;
+        ctx.beginPath();
+        ctx.moveTo(pts[0][0], pts[0][1]);
+        for (let i = 0; i < lens.length && left > 0; i++) {
+            const f = Math.min(1, left / lens[i]);
+            ctx.lineTo(pts[i][0] + (pts[i + 1][0] - pts[i][0]) * f, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * f);
+            left -= lens[i];
+        }
+        ctx.stroke();
+        if (v >= 0.7) {
+            ctx.beginPath();
+            beakPx.forEach((q, i) => i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]));
+            ctx.closePath(); ctx.fill();
+        }
+    }
+
     const tex = new THREE.CanvasTexture(canvas);
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.anisotropy = 4;
-    return tex;
+
+    // u in 0..1: left eye, right eye, then the beak
+    function draw(u) {
+        ctx.fillStyle = hex(CREAM);
+        ctx.fillRect(0, 0, size, size);
+        eye(EYES[0], seg(u, 0, 0.36));
+        eye(EYES[1], seg(u, 0.36, 0.7));
+        beak(seg(u, 0.72, 1));
+        tex.needsUpdate = true;
+    }
+    draw(0);
+    return { tex, draw };
 }
 
 // ---------- scene ----------
@@ -287,17 +379,18 @@ export function mountOwl(stage, opts = {}) {
         let i = 0;
         const putUV = q => { uvs[i++] = q[0] / (2 * H) + 0.5; uvs[i++] = q[1] / (2 * H) + 0.5; };
         for (const p of polys) {
-            const f = p.fAt[0];
-            for (let k = 1; k < f.length - 1; k++) { putUV(f[0]); putUV(f[k]); putUV(f[k + 1]); }
+            const f = p.fAt[0], n = f.length, h = p.hub;
+            for (let k = 1; k < n - 1; k++) { putUV(f[h]); putUV(f[(h + k) % n]); putUV(f[(h + k + 1) % n]); }
         }
     }
     const geom = new THREE.BufferGeometry();
     geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     geom.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
 
+    const paper = makePaperTexture();
     const mat = new THREE.MeshStandardMaterial({
-        map: makePaperTexture(), roughness: 0.94, metalness: 0,
-        side: THREE.DoubleSide, flatShading: true,
+        map: paper.tex, roughness: 0.94, metalness: 0,
+        side: THREE.DoubleSide,   // normals are computed per frame: flat on flat paper, smooth on the curled wings
     });
     mat.onBeforeCompile = sh => {
         sh.uniforms.uBack = { value: new THREE.Color(TERRACOTTA) };
@@ -328,7 +421,54 @@ export function mountOwl(stage, opts = {}) {
 
     const polyOut = new Array(polys.length);   // this frame's 3D corners, per polygon
 
+    const smoothstep = (a, b, x) => { const u = clamp((x - a) / (b - a), 0, 1); return u * u * (3 - 2 * u); };
+
+    // bend one wing corner (final flat coords q, current 3D point o) by curl in 0..1
+    function curlPoint(q, o, sx, curl) {
+        const d = [sx * WING_AXIS_D[0], WING_AXIS_D[1]];
+        const len = Math.hypot(d[0], d[1]);
+        const n = [sx * d[1] / len, -sx * d[0] / len];
+        const ax = sx * WING_AXIS_A[0], ay = WING_AXIS_A[1];
+        const s = Math.max(0, (q[0] - ax) * n[0] + (q[1] - ay) * n[1]);
+        const w = smoothstep(WING_EDGE_FADE[0], WING_EDGE_FADE[1], Math.abs(q[0]) - bodyEdgeX(q[1]));
+        const kappa = WING_KAPPA * curl * w;
+        if (kappa < 1e-4 || s <= 0) return o;
+        const bx = q[0] - s * n[0], by = q[1] - s * n[1];         // foot on the axis
+        const arc = Math.sin(kappa * s) / kappa, lift = (1 - Math.cos(kappa * s)) / kappa;
+        return [bx + arc * n[0], by + arc * n[1], o[2] + lift];
+    }
+
+    // Average normals across the wing tessellation seams (same layer, same position)
+    // so the curl shades as one smooth surface. Real creases are never smoothed.
+    const wingTri = [];   // triangle index ranges belonging to each wing layer
+    {
+        let tri = 0;
+        for (const p of polys) {
+            const n = p.v.length - 2;
+            if (isWing(p)) wingTri.push({ from: tri, to: tri + n, layer: p.layer });
+            tri += n;
+        }
+    }
+    function smoothWingNormals() {
+        const pos = geom.attributes.position.array, nor = geom.attributes.normal.array;
+        const acc = new Map();
+        const keyOf = (i, layer) => layer + ':' + pos[i * 3].toFixed(5) + ',' + pos[i * 3 + 1].toFixed(5) + ',' + pos[i * 3 + 2].toFixed(5);
+        for (const r of wingTri) for (let v = r.from * 3; v < r.to * 3; v++) {
+            const k = keyOf(v, r.layer);
+            const a = acc.get(k) || [0, 0, 0];
+            a[0] += nor[v * 3]; a[1] += nor[v * 3 + 1]; a[2] += nor[v * 3 + 2];
+            acc.set(k, a);
+        }
+        for (const r of wingTri) for (let v = r.from * 3; v < r.to * 3; v++) {
+            const a = acc.get(keyOf(v, r.layer));
+            const len = Math.hypot(a[0], a[1], a[2]) || 1;
+            nor[v * 3] = a[0] / len; nor[v * 3 + 1] = a[1] / len; nor[v * 3 + 2] = a[2] / len;
+        }
+        geom.attributes.normal.needsUpdate = true;
+    }
+
     function writePositions(t) {
+        const curl = clamp(t - 10, 0, 1) * (opts.curlScale ?? 1);   // the wings curl while the paper turns back
         let K = clamp(Math.floor(t), 0, nStages - 1);
         let prog = clamp(t - K, 0, 1);
         const L = lines[K];
@@ -352,13 +492,19 @@ export function mountOwl(stage, opts = {}) {
                     L.sgn * s * (L.d[0] * py - L.d[1] * px) + z0,
                 ];
             }
-            for (let k = 1; k < out.length - 1; k++) {
-                put(...out[0]); put(...out[k]); put(...out[k + 1]);
+            if (curl > 0 && isWing(p)) {
+                const sx = movedIn(p, 8) ? 1 : -1, fin = p.fAt[nStages];
+                for (let k = 0; k < out.length; k++) out[k] = curlPoint(fin[k], out[k], sx, curl);
+            }
+            const n = out.length, h = p.hub;
+            for (let k = 1; k < n - 1; k++) {
+                put(...out[h]); put(...out[(h + k) % n]); put(...out[(h + k + 1) % n]);
             }
             polyOut[pi] = out;
         }
         geom.attributes.position.needsUpdate = true;
         geom.computeVertexNormals();
+        if (curl > 0) smoothWingNormals();
 
         let e = 0;
         for (const ed of edges) {
@@ -423,23 +569,37 @@ export function mountOwl(stage, opts = {}) {
         return nStages * (1 - p);
     }
 
-    let lastT = -1;
+    let lastT = -1, lastInk = -1;
+    let turn = 0;                 // current turn-over angle, eased
     function frame(now) {
         requestAnimationFrame(frame);
         if (!visible) return;
-        let t;
-        if (fixedT != null) t = fixedT;
+        let t, turnTarget, ink;
+        if (fixedT != null) { t = fixedT; turnTarget = turnAngle(t); ink = fixedT >= nStages ? 1 : 0; }
         else {
-            const ti = introT(now);
-            t = Math.min(ti, scrollT());
+            const ti = introT(now), ts = scrollT();
+            t = Math.min(ti, ts);
+            // the eyes and beak are inked on once the last fold has landed; ink stays
+            const sec = (now - introStart) / 1000 - START_DELAY;
+            ink = clamp((sec - total - 0.15) / 1.5, 0, 1);
+            // The wings are folded on the back of the paper, so the timed intro turns
+            // the sheet over and back. When scrolling drives the fold instead, the owl
+            // must never rest facing away: keep it toward the viewer.
+            turnTarget = ts < ti ? 0 : turnAngle(t);
             if (!revealed && ti >= nStages * 0.8) { revealed = true; opts.onReveal && opts.onReveal(); }
         }
         if (t !== lastT) { writePositions(t); lastT = t; }
+        if (ink !== lastInk) { paper.draw(ink); lastInk = ink; }
+
+        // ease toward the target along the shortest way round (2 pi and 0 are the same face)
+        const TAU = Math.PI * 2;
+        let diff = ((turnTarget - turn) % TAU + TAU * 1.5) % TAU - Math.PI;
+        turn += diff * 0.25;
 
         const sec = now / 1000;
         tilt[0] += (mouse[0] - tilt[0]) * 0.05;
         tilt[1] += (mouse[1] - tilt[1]) * 0.05;
-        group.rotation.y = turnAngle(t) + tilt[0] * 0.55 + Math.sin(sec * 0.6) * 0.07;
+        group.rotation.y = turn + tilt[0] * 0.55 + Math.sin(sec * 0.6) * 0.07;
         group.rotation.x = tilt[1] * 0.3 + Math.sin(sec * 0.9) * 0.025;
 
         // watch the folding from over the shoulder, then settle in front of the owl
