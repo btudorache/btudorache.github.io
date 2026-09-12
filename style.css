@@ -319,7 +319,11 @@ section { padding: 70px 0; }
     transition: border-color 0.2s ease;
 }
 
+/* the arrow marks a standalone link out of a card; a link inside a sentence
+   is already read as a link, so it goes without */
 .project-link::after { content: ' \2197'; }
+
+.project-link.inline::after { content: none; }
 
 .project-link:hover { border-color: var(--terracotta); }
 

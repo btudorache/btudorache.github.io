@@ -6,7 +6,7 @@ if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
 } else {
     const hero = document.querySelector('.hero');
     try {
-        const { mountOwl } = await import('./owl.js?v=4');
+        const { mountOwl } = await import('./owl.js?v=5');
         const stage = document.querySelector('.owl-stage');
         const params = new URLSearchParams(location.search);
         const fixedT = params.has('fold') ? parseFloat(params.get('fold')) : undefined;
