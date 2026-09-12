@@ -239,17 +239,37 @@ function buildModel() {
         for (let k = 0; k < stages.length; k++) if (a.has(k) !== b.has(k)) return k;
         return Infinity;
     };
-    // an edge is part of the sheet's outline only if it lies along one side of the square
-    const onOutline = (a, b) => {
-        const side = q => (Math.abs(Math.abs(q[0]) + Math.abs(q[1]) - H) < 1e-6) ? (Math.sign(q[0]) || 1) * 2 + (Math.sign(q[1]) || 1) : 0;
-        const sa = side(a), sb = side(b);
-        return sa !== 0 && (sa === sb || Math.abs(a[0]) < 1e-9 || Math.abs(a[1]) < 1e-9 || Math.abs(b[0]) < 1e-9 || Math.abs(b[1]) < 1e-9);
+    // A half-edge with no twin is either on the sheet's outline or meets a neighbour
+    // that was subdivided differently (a T-junction from the wing tessellation).
+    // Resolve it by probing just across the edge in sheet coords.
+    const inPoly = (poly, pt) => {
+        let sign = 0;
+        for (let i = 0; i < poly.v.length; i++) {
+            const a = poly.v[i].p, b = poly.v[(i + 1) % poly.v.length].p;
+            const c = (b[0] - a[0]) * (pt[1] - a[1]) - (b[1] - a[1]) * (pt[0] - a[0]);
+            if (Math.abs(c) < 1e-12) continue;
+            const s = Math.sign(c);
+            if (sign && s !== sign) return false;
+            sign = s;
+        }
+        return true;
+    };
+    const acrossEdge = (e) => {
+        const P = polys[e.pi], a = P.v[e.i].p, b = P.v[e.j].p;
+        const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+        const len = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+        const nx = -(b[1] - a[1]) / len * 1e-4, ny = (b[0] - a[0]) / len * 1e-4;
+        const probe = inPoly(P, [mx + nx, my + ny]) ? [mx - nx, my - ny] : [mx + nx, my + ny];
+        if (Math.abs(probe[0]) + Math.abs(probe[1]) > H) return null;          // off the sheet: outline
+        return polys.find(Q => Q !== P && inPoly(Q, probe)) || null;
     };
     const edges = [];
     for (const list of edgeMap.values()) {
         if (list.length === 1) {
-            const e = list[0], pv = polys[e.pi].v;
-            if (onOutline(pv[e.i].p, pv[e.j].p)) edges.push({ ...e, since: -1 });
+            const e = list[0], Q = acrossEdge(e);
+            if (!Q) { edges.push({ ...e, since: -1 }); continue; }
+            const since = firstDifference(polys[e.pi].moved, Q.moved);
+            if (since !== Infinity) edges.push({ ...e, since });
             continue;
         }
         const [e0, e1] = list;
