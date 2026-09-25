@@ -3,214 +3,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bogdan Tudorache</title>
-    <meta name="description" content="Bogdan Tudorache — software engineer. Systems, AI/ML, cloud computing. Folder of paper, reader of books, occasional meditator.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=5">
-</head>
-<body>
-    <script>
-        // Stays inline: it must run before first paint. Hides the hero copy until the
-        // sheet has folded; main.js reveals it.
-        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-            document.documentElement.classList.add('folding');
-            setTimeout(function () { document.documentElement.classList.remove('folding'); }, 9000);
+    <title>Bogdan Tudorache — Software Engineer</title>
+    <meta name="description" content="Bogdan Tudorache is a cloud software engineer at Microsoft, based in Bucharest. Also folds paper, meditates and reads more than is reasonable.">
+    <link rel="canonical" href="https://btudorache.github.io/">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#faf6ee" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#1a1713" media="(prefers-color-scheme: dark)">
+
+    <meta property="og:type" content="profile">
+    <meta property="og:url" content="https://btudorache.github.io/">
+    <meta property="og:title" content="Bogdan Tudorache — Software Engineer">
+    <meta property="og:description" content="Cloud infrastructure at Microsoft by day; folding paper, sitting still and turning pages the rest of the time.">
+    <meta property="og:image" content="https://btudorache.github.io/assets/og.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="A terracotta origami owl above the name Bogdan Tudorache">
+    <meta property="profile:first_name" content="Bogdan">
+    <meta property="profile:last_name" content="Tudorache">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <link rel="icon" href="favicon.ico" sizes="32x32">
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "name": "Bogdan Tudorache",
+        "url": "https://btudorache.github.io/",
+        "jobTitle": "Cloud Software Engineer",
+        "worksFor": { "@type": "Organization", "name": "Microsoft" },
+        "address": { "@type": "PostalAddress", "addressLocality": "Bucharest", "addressCountry": "RO" },
+        "sameAs": [
+            "https://github.com/btudorache",
+            "https://www.linkedin.com/in/bogdan-mihai-tudorache/",
+            "https://www.goodreads.com/user/show/78231032-bogdan-tudorache"
+        ]
+    }
+    </script>
+
+    <!-- the three fonts above the fold, fetched alongside the stylesheet rather than after it -->
+    <link rel="preload" href="assets/fonts/fraunces.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="assets/fonts/fraunces-italic.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="assets/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="style.css?v=6">
+
+    <!-- Before first paint: content that scripts will animate in is hidden only when scripts run. -->
+    <script>document.documentElement.classList.add('js');</script>
+
+    <!-- One place for module versions: bump v= here when a module changes. The
+         import map must come before anything starts loading a module. -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.min.js",
+                "./owl.js": "./owl.js?v=6",
+                "./owl-model.js": "./owl-model.js?v=6",
+                "./paper.js": "./paper.js?v=6",
+                "./drift.js": "./drift.js?v=6",
+                "./glyphs.js": "./glyphs.js?v=6"
+            }
         }
     </script>
-    <canvas id="paper-canvas" aria-hidden="true"></canvas>
+    <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.min.js" crossorigin>
+    <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.core.min.js" crossorigin>
+    <link rel="modulepreload" href="owl.js?v=6">
+    <link rel="modulepreload" href="owl-model.js?v=6">
+    <link rel="modulepreload" href="paper.js?v=6">
+</head>
+<body>
+    <canvas id="paper-drift" aria-hidden="true"></canvas>
 
-    <div class="page">
+    <main class="page">
         <!-- ============ Hero ============ -->
         <header class="hero">
-            <div class="owl-stage" aria-hidden="true" title="Fold it again"></div>
-            <svg class="owl" viewBox="0 0 200 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Geometric origami owl">
-                <!-- wings, tucked behind the body -->
-                <polygon points="50,100 32,162 62,174 66,120" fill="#8f4225"/>
-                <polygon points="150,100 168,162 138,174 134,120" fill="#a94f2e"/>
-                <!-- feet -->
-                <polygon points="76,181 86,201 96,188" fill="#8f4225"/>
-                <polygon points="124,181 114,201 104,188" fill="#8f4225"/>
-                <!-- body and chest folds -->
-                <polygon points="50,100 100,118 150,100 140,172 100,192 60,172" fill="#b35a37"/>
-                <polygon points="50,100 100,118 76,152" fill="#c2643f"/>
-                <polygon points="150,100 100,118 124,152" fill="#d98a5f"/>
-                <polygon points="60,172 76,152 100,192" fill="#a94f2e"/>
-                <polygon points="140,172 124,152 100,192" fill="#c2643f"/>
-                <polygon points="100,118 124,152 100,192 76,152" fill="#cf7448"/>
-                <!-- ear tufts -->
-                <polygon points="44,20 56,60 68,56" fill="#a94f2e"/>
-                <polygon points="44,20 68,56 80,50" fill="#c2643f"/>
-                <polygon points="156,20 144,60 132,56" fill="#d98a5f"/>
-                <polygon points="156,20 132,56 120,50" fill="#c2643f"/>
-                <!-- face -->
-                <polygon points="56,60 80,50 100,80 100,118 50,100" fill="#c2643f"/>
-                <polygon points="144,60 120,50 100,80 100,118 150,100" fill="#d98a5f"/>
-                <polygon points="80,50 100,56 120,50 100,80" fill="#a94f2e"/>
-                <!-- eyes -->
-                <g class="eye">
-                    <polygon points="76,71 87.3,77.5 87.3,90.5 76,97 64.7,90.5 64.7,77.5" fill="#faf6ee"/>
-                    <polygon points="76,78 81.2,81 81.2,87 76,90 70.8,87 70.8,81" fill="#2b2721"/>
-                    <circle cx="73.5" cy="80.5" r="1.8" fill="#ffffff"/>
-                </g>
-                <g class="eye">
-                    <polygon points="124,71 135.3,77.5 135.3,90.5 124,97 112.7,90.5 112.7,77.5" fill="#faf6ee"/>
-                    <polygon points="124,78 129.2,81 129.2,87 124,90 118.8,87 118.8,81" fill="#2b2721"/>
-                    <circle cx="121.5" cy="80.5" r="1.8" fill="#ffffff"/>
-                </g>
-                <!-- beak -->
-                <polygon points="91,94 109,94 100,112" fill="#8f4225"/>
-            </svg>
-            <div class="hero-copy">
-            <h1>Bogdan Tudorache</h1>
-            <div class="role">Software Engineer</div>
-            <p class="tagline">Systems, services and cloud infra by day &mdash; folding paper, sitting still and turning pages the rest of the time. Always keeping an eye out on all things AI.</p>
+            <!-- The folding owl (three.js, owl.js) mounts here. Without WebGL, or while
+                 three.js is slow to arrive, the same owl shows as a flat drawing. -->
+            <div class="owl-stage">
+                <!-- owl-svg:start (generated by tools/owl-svg.mjs; do not edit by hand) -->
+                <svg class="owl-fallback" viewBox="-561 -618 1123 595" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="An origami owl, folded from a square of paper"><polygon points="0,-85 -42,-85 -53,-42 0,-42" fill="#f8f1e4"/><path d="M0,-85L-42,-85M-53,-42L0,-42M-42,-85L-53,-42"/><polygon points="42,-85 0,-85 0,-42 53,-42" fill="#f8f1e4"/><path d="M42,-85L0,-85M0,-42L53,-42M53,-42L42,-85"/><polygon points="-53,-42 -42,-85 0,-85 0,-42" fill="#b85a36"/><path d="M0,-42L-53,-42M-53,-42L-42,-85M-42,-85L0,-85"/><polygon points="0,-42 0,-85 42,-85 53,-42" fill="#b85a36"/><path d="M53,-42L0,-42M0,-85L42,-85M42,-85L53,-42"/><polygon points="0,-42 0,-62 -42,-85 -53,-42" fill="#f8f1e4"/><path d="M-42,-85L-53,-42M-53,-42L0,-42M0,-42L0,-62M0,-62L-42,-85"/><polygon points="-42,-85 0,-62 0,-42 -53,-42" fill="#b85a36"/><path d="M-42,-85L0,-62M-53,-42L-42,-85M0,-42L-53,-42M0,-62L0,-42"/><polygon points="0,-62 -35,-42 0,-42" fill="#f8f1e4"/><path d="M0,-62L-35,-42M0,-42L0,-62M-35,-42L0,-42"/><polygon points="-35,-42 0,-62 0,-42" fill="#b85a36"/><path d="M0,-62L0,-42M0,-42L-35,-42M-35,-42L0,-62"/><polygon points="53,-42 42,-85 0,-62 0,-42" fill="#f8f1e4"/><path d="M53,-42L42,-85M0,-42L53,-42M42,-85L0,-62M0,-62L0,-42"/><polygon points="0,-42 0,-62 42,-85 53,-42" fill="#b85a36"/><path d="M0,-62L42,-85M42,-85L53,-42M53,-42L0,-42M0,-42L0,-62"/><polygon points="35,-42 0,-62 0,-42" fill="#f8f1e4"/><path d="M35,-42L0,-62M0,-62L0,-42M0,-42L35,-42"/><polygon points="0,-42 0,-62 35,-42" fill="#b85a36"/><path d="M0,-42L0,-62M35,-42L0,-42M0,-62L35,-42"/><polygon points="541,-318 0,-477 0,-42 35,-42" fill="#f8f1e4"/><path d="M0,-477L0,-42M541,-318L0,-477M0,-42L35,-42M35,-42L541,-318"/><polygon points="0,-477 541,-318 35,-42 0,-42" fill="#b85a36"/><path d="M541,-318L35,-42M0,-42L0,-477M0,-477L541,-318M35,-42L0,-42"/><polygon points="149,-417 121,-513 167,-488" fill="#b85a36"/><path d="M121,-513L167,-488M167,-488L149,-417M149,-417L121,-513"/><polygon points="121,-513 0,-477 0,-42 53,-42 167,-488" fill="#f8f1e4"/><path d="M53,-42L167,-488M121,-513L0,-477M0,-477L0,-42M0,-42L53,-42M167,-488L121,-513"/><polygon points="0,-477 121,-513 167,-488 53,-42 0,-42" fill="#b85a36"/><path d="M167,-488L53,-42M0,-477L121,-513M53,-42L0,-42M0,-42L0,-477"/><polygon points="121,-513 177,-530 167,-488" fill="#b85a36"/><path d="M177,-530L167,-488M121,-513L177,-530"/><polygon points="0,-477 -541,-318 -35,-42 0,-42" fill="#f8f1e4"/><path d="M0,-42L0,-477M0,-477L-541,-318M-541,-318L-35,-42M-35,-42L0,-42"/><polygon points="-35,-42 -541,-318 0,-477 0,-42" fill="#b85a36"/><path d="M-35,-42L-541,-318M0,-477L0,-42M-541,-318L0,-477M0,-42L-35,-42"/><polygon points="-167,-488 -121,-513 -149,-417" fill="#b85a36"/><path d="M-167,-488L-121,-513M-149,-417L-167,-488M-121,-513L-149,-417"/><polygon points="0,-42 0,-477 -121,-513 -167,-488 -53,-42" fill="#f8f1e4"/><path d="M-167,-488L-53,-42M0,-42L0,-477M0,-477L-121,-513M-121,-513L-167,-488M-53,-42L0,-42"/><polygon points="-167,-488 -121,-513 0,-477 0,-42 -53,-42" fill="#b85a36"/><path d="M-53,-42L-167,-488M-121,-513L0,-477M0,-477L0,-42M0,-42L-53,-42"/><polygon points="-177,-530 -121,-513 -167,-488" fill="#b85a36"/><path d="M-167,-488L-177,-530M-177,-530L-121,-513"/><polygon points="0,-488 -167,-488 -53,-42 0,-42" fill="#f8f1e4"/><path d="M-167,-488L-53,-42M-53,-42L0,-42"/><polygon points="167,-488 0,-488 0,-42 53,-42" fill="#f8f1e4"/><path d="M0,-42L53,-42M53,-42L167,-488"/><polygon points="0,-559 -148,-559 -177,-530 -167,-488 0,-488" fill="#f8f1e4"/><path d="M-148,-559L-177,-530M-177,-530L-167,-488"/><polygon points="177,-530 148,-559 0,-559 0,-488 167,-488" fill="#f8f1e4"/><path d="M177,-530L148,-559M167,-488L177,-530"/><polygon points="0,-598 -110,-598 -148,-559 0,-559" fill="#f8f1e4"/><path d="M0,-598L-110,-598M-110,-598L-148,-559"/><polygon points="148,-559 110,-598 0,-598 0,-559" fill="#f8f1e4"/><path d="M148,-559L110,-598M110,-598L0,-598"/><polygon points="-53,-42 -167,-488 0,-488 0,-42" fill="#b85a36"/><path d="M-53,-42L-167,-488M-167,-488L0,-488M0,-42L-53,-42"/><polygon points="0,-42 0,-488 167,-488 53,-42" fill="#b85a36"/><path d="M0,-488L167,-488M167,-488L53,-42M53,-42L0,-42"/><polygon points="0,-410 0,-488 -78,-488" fill="#f8f1e4"/><path d="M0,-488L-78,-488M-78,-488L0,-410"/><polygon points="0,-410 78,-488 0,-488" fill="#f8f1e4"/><path d="M0,-410L78,-488M78,-488L0,-488"/><polygon points="0,-417 -148,-417 -78,-488 0,-488" fill="#b85a36"/><path d="M0,-417L-148,-417M-78,-488L0,-488M-148,-417L-78,-488"/><polygon points="78,-488 148,-417 0,-417 0,-488" fill="#b85a36"/><path d="M148,-417L0,-417M0,-488L78,-488M78,-488L148,-417"/><polygon points="0,-488 -167,-488 -149,-417 -148,-417 0,-417" fill="#f8f1e4"/><path d="M0,-488L-167,-488M-167,-488L-149,-417M-149,-417L-148,-417M-148,-417L0,-417"/><polygon points="148,-417 149,-417 167,-488 0,-488 0,-417" fill="#f8f1e4"/><path d="M167,-488L0,-488M148,-417L149,-417M149,-417L167,-488M0,-417L148,-417"/><polygon points="0,-488 -110,-598 0,-598" fill="#b85a36"/><path d="M-110,-598L0,-598M0,-488L-110,-598"/><polygon points="110,-598 0,-488 0,-598" fill="#b85a36"/><path d="M0,-598L110,-598M110,-598L0,-488"/><circle cx="-71" cy="-453" r="25" fill="#2b2721"/><circle cx="-79" cy="-461" r="7" fill="#fff"/><circle cx="71" cy="-453" r="25" fill="#2b2721"/><circle cx="62" cy="-461" r="7" fill="#fff"/><polygon points="-21,-442 21,-442 0,-421" fill="#a94f2e" stroke="#a94f2e" stroke-width="9" stroke-linejoin="round"/></svg>
+                <!-- owl-svg:end -->
+            </div>
 
-            <nav class="contact-row" aria-label="Contact links">
-                <a href="https://github.com/btudorache" class="contact-link" target="_blank" rel="noopener" title="GitHub" aria-label="GitHub">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            <h1>Bogdan Tudorache</h1>
+            <p class="role">Cloud Software Engineer at Microsoft</p>
+            <p class="tagline">Systems, services and cloud infra by day &mdash; folding paper, sitting still and turning pages the rest of the time. Always keeping an eye on all things AI.</p>
+
+            <nav class="contact-row" aria-label="Contact">
+                <a href="https://github.com/btudorache" class="contact-link" rel="me">
+                    <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                    GitHub
                 </a>
-                <a href="https://linkedin.com/in/bogdan-mihai-tudorache/" class="contact-link" target="_blank" rel="noopener" title="LinkedIn" aria-label="LinkedIn">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                <a href="https://www.linkedin.com/in/bogdan-mihai-tudorache/" class="contact-link" rel="me">
+                    <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                    LinkedIn
                 </a>
-                <a href="mailto:bogdanmihait10@gmail.com" class="contact-link" title="Email" aria-label="Email">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 3v18h24v-18h-24zm21.518 2l-9.518 7.713-9.518-7.713h19.036zm-19.518 14v-11.817l10 8.104 10-8.104v11.817h-20z"/></svg>
+                <a href="mailto:bogdanmihait10@gmail.com" class="contact-link">
+                    <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M0 3v18h24v-18h-24zm21.518 2l-9.518 7.713-9.518-7.713h19.036zm-19.518 14v-11.817l10 8.104 10-8.104v11.817h-20z"/></svg>
+                    Email
                 </a>
-                <a href="https://drive.google.com/file/d/1uZ_CAiNhr6E3AN9_YrYSHAXfB9_qcJrd/view?usp=sharing" class="contact-link" target="_blank" rel="noopener" title="CV" aria-label="CV">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14,2H6C4.9,2 4,2.9 4,4V20c0,1.1 0.9,2 2,2h12c1.1,0 2-0.9 2-2V8L14,2zM6,20V4h7v5h5v11H6zM11,19h2v-1h-2V19zM11,17h2v-1h-2V17zM11,15h2v-1h-2V15zM11,13h2v-1h-2V13zM11,11h2v-1h-2V11zM11,9h2V8h-2V9zM9,17h-2v-1h2V17zM9,15h-2v-1h2V15zM9,13h-2v-1h2V13zM9,11h-2v-1h2V11zM9,9h-2V8h2V9z"/></svg>
+                <!-- the one link that opens a new tab: it is a document, not a page -->
+                <a href="https://drive.google.com/file/d/1uZ_CAiNhr6E3AN9_YrYSHAXfB9_qcJrd/view?usp=sharing" class="contact-link" target="_blank" rel="noopener">
+                    <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zM8 12h8v2H8zm0 4h8v2H8zm0-8h3v2H8z"/></svg>
+                    CV<span class="visually-hidden"> (PDF, opens in a new tab)</span>
                 </a>
             </nav>
 
-            <div class="scroll-hint">fold by fold &darr;</div>
-            </div>
+            <p class="scroll-hint" aria-hidden="true">fold by fold &darr;</p>
         </header>
 
-        <hr class="divider">
-
-        <!-- ============ Interests ============ -->
-        <section id="interests">
-            <div class="section-kicker reveal">Away from the keyboard (mostly)</div>
-            <h2 class="section-title reveal">Four things I keep coming back to</h2>
-            <div class="interests-grid">
-                <div class="fold-card accent-origami reveal">
-                    <svg class="glyph" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <polygon points="24,4 44,40 24,30" fill="#c2643f" opacity="0.85"/>
-                        <polygon points="24,4 4,40 24,30" fill="#d98a5f" opacity="0.85"/>
-                        <polygon points="4,40 24,30 44,40 24,44" fill="#a94f2e" opacity="0.9"/>
-                    </svg>
-                    <h3>Origami</h3>
-                    <p>Flat square in, owl out. The same appeal as programming: strict rules, precise steps, and something surprising at the end.</p>
-                </div>
-                <div class="fold-card accent-meditation reveal">
-                    <span class="breath" aria-hidden="true"></span>
-                    <h3>Meditation</h3>
-                    <p>Sitting still and watching the mind do anything but. The one practice where doing nothing is the whole point.</p>
-                </div>
-                <div class="fold-card accent-programming reveal">
-                    <svg class="glyph" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <polyline points="18,14 8,24 18,34" fill="none" stroke="#5d7f9d" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        <polyline points="30,14 40,24 30,34" fill="none" stroke="#5d7f9d" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        <line x1="26" y1="10" x2="22" y2="38" stroke="#8fa9c0" stroke-width="3" stroke-linecap="round"/>
-                    </svg>
-                    <h3>Programming</h3>
-                    <p>Systems, compilers, distributed things &mdash; the layers most people never look at, which is exactly why I like them.</p>
-                </div>
-                <div class="fold-card accent-reading reveal">
-                    <svg class="glyph" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <path d="M24 12 C18 7, 8 7, 5 10 L5 38 C8 35, 18 35, 24 40 C30 35, 40 35, 43 38 L43 10 C40 7, 30 7, 24 12 Z" fill="none" stroke="#c9a24b" stroke-width="3" stroke-linejoin="round"/>
-                        <line x1="24" y1="12" x2="24" y2="40" stroke="#c9a24b" stroke-width="3"/>
-                    </svg>
-                    <h3>Reading</h3>
-                    <p>Fiction, technical books and everything between. A stack of unread books that grows faster than any backlog I have ever managed. <a href="https://www.goodreads.com/review/list/78231032?shelf=read" class="project-link inline" target="_blank" rel="noopener">List of books I've enjoyed</a></p>
-                </div>
-            </div>
+        <!-- ============ Work ============ -->
+        <section id="work" aria-labelledby="work-title">
+            <p class="section-kicker reveal">By day</p>
+            <h2 id="work-title" class="section-title reveal">Work</h2>
+            <ol class="timeline" role="list">
+                <li class="timeline-item reveal">
+                    <p class="when"><time datetime="2023-12">Dec 2023</time> &ndash; now</p>
+                    <h3>Cloud Software Engineer <span class="where">at Microsoft</span></h3>
+                </li>
+                <li class="timeline-item reveal">
+                    <p class="when"><time datetime="2021-11">Nov 2021</time> &ndash; <time datetime="2023-11">Nov 2023</time></p>
+                    <h3>Full-stack Software Engineer <span class="where">at Microchip Technology</span></h3>
+                </li>
+            </ol>
         </section>
-
-        <hr class="divider">
 
         <!-- ============ Projects ============ -->
-        <section id="projects">
-            <div class="section-kicker reveal">Selected work</div>
-            <h2 class="section-title reveal">Projects</h2>
-            <div class="projects-grid">
-                <div class="fold-card project-card reveal">
-                    <h3>ArtBazar</h3>
-                    <p>Social website dedicated to artists for an easier way to share their work with the world. Built with React, Spring Boot and PostgreSQL.</p>
-                    <div class="tech-tags">
-                        <span class="tech-tag">React</span>
-                        <span class="tech-tag">Spring Boot</span>
-                        <span class="tech-tag">PostgreSQL</span>
-                        <span class="tech-tag">Docker</span>
-                    </div>
-                    <a href="https://github.com/btudorache/artbazar" class="project-link" target="_blank" rel="noopener">View project</a>
-                </div>
-
-                <div class="fold-card project-card reveal">
-                    <h3>Figma to Compose</h3>
-                    <p>Automatically generates Compose code from Figma designs &mdash; bootstrap Figma projects directly into Android code.</p>
-                    <div class="tech-tags">
-                        <span class="tech-tag">Kotlin</span>
-                        <span class="tech-tag">Android</span>
-                        <span class="tech-tag">Code Generation</span>
-                    </div>
-                    <a href="https://github.com/btudorache/figma2compose" class="project-link" target="_blank" rel="noopener">View project</a>
-                </div>
-
-                <div class="fold-card project-card reveal">
-                    <h3>Big Data IoT Engine</h3>
-                    <p>IoT data engine processing thousands of messages per second, leveraging Kafka for real-time data streaming.</p>
-                    <div class="tech-tags">
-                        <span class="tech-tag">Go</span>
-                        <span class="tech-tag">Python</span>
-                        <span class="tech-tag">Kafka</span>
-                    </div>
-                    <a href="https://github.com/btudorache/big-data-engine" class="project-link" target="_blank" rel="noopener">View project</a>
-                </div>
-
-                <div class="fold-card project-card reveal">
-                    <h3>COOL Compiler</h3>
-                    <p>Compiler for a didactic programming language with modern features: objects, automatic memory management and strong static typing.</p>
-                    <div class="tech-tags">
-                        <span class="tech-tag">Java</span>
-                        <span class="tech-tag">ANTLR</span>
-                        <span class="tech-tag">StringTemplate</span>
-                        <span class="tech-tag">MIPS</span>
-                    </div>
-                    <a href="https://github.com/btudorache/CPL" class="project-link" target="_blank" rel="noopener">View project</a>
-                </div>
-
-                <div class="fold-card project-card reveal">
-                    <h3>Operating Systems Projects</h3>
+        <section id="projects" aria-labelledby="projects-title">
+            <p class="section-kicker reveal">Built along the way</p>
+            <h2 id="projects-title" class="section-title reveal">Projects</h2>
+            <!-- each card is one link (its title), stretched over the card -->
+            <ul class="projects-grid" role="list">
+                <li class="fold-card project-card reveal">
+                    <h3><a href="https://github.com/btudorache/DCC" class="card-link">RDMA Client-Server Library</a></h3>
+                    <p>A C library that hides the ceremony of RDMA &mdash; queue pairs, memory registration, connection setup &mdash; behind a small API for low-latency messaging over InfiniBand or RoCE, with send/receive, broadcast and all-to-all built in.</p>
+                    <ul class="tech-tags" role="list" aria-label="Built with"><li>C</li><li>RDMA</li><li>InfiniBand</li></ul>
+                    <span class="source" aria-hidden="true">GitHub</span>
+                </li>
+                <li class="fold-card project-card reveal">
+                    <h3><a href="https://github.com/btudorache/SO2" class="card-link">Operating Systems Projects</a></h3>
                     <p>Kernel drivers, system call tracers, async web servers and executable loaders.</p>
-                    <div class="tech-tags">
-                        <span class="tech-tag">C</span>
-                        <span class="tech-tag">OS Development</span>
-                        <span class="tech-tag">Design Patterns</span>
-                    </div>
-                    <a href="https://github.com/btudorache/SO2" class="project-link" target="_blank" rel="noopener">View project</a>
-                </div>
-
-                <div class="fold-card project-card reveal">
-                    <h3>RDMA Client-Server Library</h3>
-                    <p>High-level abstraction for RDMA communication in distributed systems: a client-server architecture for efficient, low-latency communication over InfiniBand/RoCE.</p>
-                    <div class="tech-tags">
-                        <span class="tech-tag">C</span>
-                        <span class="tech-tag">RDMA</span>
-                        <span class="tech-tag">Distributed Systems</span>
-                    </div>
-                    <a href="https://github.com/btudorache/DCC" class="project-link" target="_blank" rel="noopener">View project</a>
-                </div>
-            </div>
+                    <ul class="tech-tags" role="list" aria-label="Built with"><li>C</li><li>OS Development</li><li>Design Patterns</li></ul>
+                    <span class="source" aria-hidden="true">GitHub</span>
+                </li>
+                <li class="fold-card project-card reveal">
+                    <h3><a href="https://github.com/btudorache/CPL" class="card-link">COOL Compiler</a></h3>
+                    <p>A complete compiler for COOL, a statically typed object-oriented teaching language, down to MIPS assembly: lexer and parser, semantic analysis, and code generation for inheritance, polymorphism and basic reflection.</p>
+                    <ul class="tech-tags" role="list" aria-label="Built with"><li>Java</li><li>ANTLR</li><li>StringTemplate</li><li>MIPS</li></ul>
+                    <span class="source" aria-hidden="true">GitHub</span>
+                </li>
+                <li class="fold-card project-card reveal">
+                    <h3><a href="https://github.com/btudorache/big-data-engine" class="card-link">Big Data IoT Engine</a></h3>
+                    <p>An IoT ingestion engine in Go: devices report over MQTT or HTTP, data fans out to Kafka, PostgreSQL and blob storage, and consumers read it through Kafka, a REST API or webhooks. Load-tested at about 1,000 messages a second from 2,250 simulated devices.</p>
+                    <ul class="tech-tags" role="list" aria-label="Built with"><li>Go</li><li>Kafka</li><li>MQTT</li><li>Azure</li></ul>
+                    <span class="source" aria-hidden="true">GitHub</span>
+                </li>
+                <li class="fold-card project-card reveal">
+                    <h3><a href="https://github.com/btudorache/figma2compose" class="card-link">Figma to Compose</a></h3>
+                    <p>Turns Figma designs into Jetpack Compose code: tag the components in Figma and get native Android and Material components back, nested the way the design nests them.</p>
+                    <ul class="tech-tags" role="list" aria-label="Built with"><li>Kotlin</li><li>Jetpack Compose</li><li>Code generation</li></ul>
+                    <span class="source" aria-hidden="true">GitHub</span>
+                </li>
+                <li class="fold-card project-card reveal">
+                    <h3><a href="https://github.com/btudorache/artbazar" class="card-link">ArtBazar</a></h3>
+                    <p>A social site for artists: post work by category, follow other artists, comment, and meet someone new with a &ldquo;random art&rdquo; button.</p>
+                    <ul class="tech-tags" role="list" aria-label="Built with"><li>React</li><li>Spring Boot</li><li>PostgreSQL</li><li>Docker</li></ul>
+                    <span class="source" aria-hidden="true">GitHub</span>
+                </li>
+            </ul>
         </section>
-    </div>
 
-    <script src="site.js?v=5"></script>
+        <!-- ============ Interests ============ -->
+        <section id="interests" aria-labelledby="interests-title">
+            <p class="section-kicker reveal">Away from the keyboard (mostly)</p>
+            <h2 id="interests-title" class="section-title reveal">Four things I keep coming back to</h2>
+            <!-- Each .glyph gets a small three.js paper object (glyphs.js); the SVG or
+                 CSS inside is what shows without WebGL. -->
+            <ul class="interests-grid" role="list">
+                <li class="fold-card accent-origami reveal">
+                    <div class="glyph" data-glyph="origami">
+                        <svg class="glyph-fallback" viewBox="0 0 48 48" aria-hidden="true">
+                            <polygon points="24,4 44,40 24,30" fill="#c2643f" opacity="0.85"/>
+                            <polygon points="24,4 4,40 24,30" fill="#d98a5f" opacity="0.85"/>
+                            <polygon points="4,40 24,30 44,40 24,44" fill="#a94f2e" opacity="0.9"/>
+                        </svg>
+                    </div>
+                    <h3>Origami</h3>
+                    <p>Flat square in, owl out. The same appeal as programming: strict rules, precise steps, and something surprising at the end.</p>
+                    <p class="glyph-note">Above: the owl at the top of this page, unfolded. Terracotta creases fold away from you, blue ones toward you.</p>
+                </li>
+                <li class="fold-card accent-meditation reveal">
+                    <div class="glyph" data-glyph="meditation">
+                        <span class="glyph-fallback breath" aria-hidden="true"></span>
+                    </div>
+                    <h3>Meditation</h3>
+                    <p>Sitting still and watching the mind do anything but. The one practice where doing nothing is the whole point.</p>
+                </li>
+                <li class="fold-card accent-programming reveal">
+                    <div class="glyph" data-glyph="programming">
+                        <svg class="glyph-fallback" viewBox="0 0 48 48" aria-hidden="true">
+                            <polyline points="18,14 8,24 18,34" fill="none" stroke="#5d7f9d" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <polyline points="30,14 40,24 30,34" fill="none" stroke="#5d7f9d" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <line x1="26" y1="10" x2="22" y2="38" stroke="#8fa9c0" stroke-width="3" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <h3>Programming</h3>
+                    <p>Systems, compilers, distributed things &mdash; the layers most people never look at, which is exactly why I like them.</p>
+                </li>
+                <li class="fold-card accent-reading reveal">
+                    <div class="glyph" data-glyph="reading">
+                        <svg class="glyph-fallback" viewBox="0 0 48 48" aria-hidden="true">
+                            <path d="M24 12 C18 7, 8 7, 5 10 L5 38 C8 35, 18 35, 24 40 C30 35, 40 35, 43 38 L43 10 C40 7, 30 7, 24 12 Z" fill="none" stroke="#c9a24b" stroke-width="3" stroke-linejoin="round"/>
+                            <line x1="24" y1="12" x2="24" y2="40" stroke="#c9a24b" stroke-width="3"/>
+                        </svg>
+                    </div>
+                    <h3>Reading</h3>
+                    <p>Fiction, technical books and everything between. <a href="https://www.goodreads.com/user/show/78231032-bogdan-tudorache" class="inline-link">A list of books I have enjoyed is on Goodreads</a>.</p>
+                </li>
+            </ul>
+        </section>
+    </main>
 
-    <!-- The folding owl (three.js). Falls back to the SVG owl without WebGL or with reduced motion. -->
-    <script type="importmap">
-        { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js" } }
-    </script>
-    <script type="module" src="main.js?v=5"></script>
+    <footer class="site-footer">
+        <p>Bogdan Tudorache &middot; Bucharest, Romania</p>
+        <p class="colophon">The owl at the top is folded live, one crease at a time, by a small three.js engine; the crease pattern in the origami card comes out of the same code. <a href="https://github.com/btudorache/btudorache.github.io" class="inline-link">Read the source</a>.</p>
+    </footer>
+
+    <script src="site.js?v=6" defer></script>
+    <script type="module" src="main.js?v=6"></script>
 </body>
 </html>

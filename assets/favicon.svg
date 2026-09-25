@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- the owl's face: terracotta crown between cream ears, the cream band with eyes and beak -->
+  <polygon points="8,19 24,19 21,30 11,30" fill="#a94f2e"/>
+  <polygon points="3,9 7,3.5 25,3.5 29,9 29,19.5 3,19.5" fill="#f8f1e4"/>
+  <polygon points="8.5,3.5 23.5,3.5 16,11" fill="#b85a36"/>
+  <polyline points="3,12.2 29,12.2" stroke="#2b2721" stroke-opacity=".25" stroke-width=".8" fill="none"/>
+  <circle cx="10.6" cy="15.3" r="2.7" fill="#2b2721"/>
+  <circle cx="21.4" cy="15.3" r="2.7" fill="#2b2721"/>
+  <circle cx="9.8" cy="14.4" r=".8" fill="#fff"/>
+  <circle cx="20.6" cy="14.4" r=".8" fill="#fff"/>
+  <polygon points="14.3,16.4 17.7,16.4 16,19" fill="#a94f2e"/>
+  <polygon points="3,9 7,3.5 25,3.5 29,9 29,19.5 3,19.5" fill="none" stroke="#2b2721" stroke-opacity=".3" stroke-width=".8" stroke-linejoin="round"/>
+</svg>

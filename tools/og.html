@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<!-- The social preview (assets/og.png): the finished owl, lit by owl.js, next to the
+     name. To regenerate, serve the repo root, open /tools/og.html in a 1200x630
+     window and screenshot it. -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>og image</title>
+    <meta name="robots" content="noindex">
+    <style>
+        @font-face { font-family: 'Fraunces'; font-weight: 400 600; src: url(../assets/fonts/fraunces.woff2) format('woff2'); }
+        @font-face { font-family: 'Fraunces'; font-style: italic; src: url(../assets/fonts/fraunces-italic.woff2) format('woff2'); }
+        @font-face { font-family: 'Inter'; font-weight: 400 600; src: url(../assets/fonts/inter.woff2) format('woff2'); }
+        html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; background: #faf6ee; color: #2b2721; }
+        body { display: flex; align-items: center; }
+        .owl-stage { width: 620px; height: 430px; flex: none; margin: 0 0 0 6px; }
+        .owl-stage canvas { display: block; width: 100%; height: 100%; }
+        .text { padding-right: 64px; }
+        h1, .role, .tagline { text-wrap: balance; }
+        h1 { font: 500 76px/1.04 'Fraunces', Georgia, serif; letter-spacing: -0.02em; margin: 0; }
+        .role { margin-top: 22px; font: 600 18px 'Inter', sans-serif; letter-spacing: 0.2em; text-transform: uppercase; color: #a35334; }
+        .tagline { margin-top: 26px; font: italic 400 25px/1.45 'Fraunces', Georgia, serif; color: #6b6459; }
+    </style>
+    <script type="importmap">
+        { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.min.js" } }
+    </script>
+</head>
+<body>
+    <div class="owl-stage"></div>
+    <div class="text">
+        <h1>Bogdan Tudorache</h1>
+        <div class="role">Cloud Software Engineer at Microsoft</div>
+        <div class="tagline">Systems and cloud infra by day; folding paper, sitting still and turning pages the rest of the time.</div>
+    </div>
+    <script type="module">
+        import { mountOwl } from '../owl.js';
+        await document.fonts.ready;
+        await mountOwl(document.querySelector('.owl-stage'), { still: true });
+        document.documentElement.dataset.ready = '1';
+    </script>
+</body>
+</html>
