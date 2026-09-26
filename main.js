@@ -1,8 +1,8 @@
 // Boots the three.js pieces of the page. Each one falls back on its own: the flat
 // SVG owl, no drifting paper, the SVG glyphs.
 //
-// Debug parameters: ?fold=<t> freezes the owl at stage t (0..11); ?curl=<k> scales
-// the wing curl.
+// Debug parameter: ?fold=<t> freezes the owl at stage t (0 to the number of stages
+// in owl-model.js; fractions show a fold part-way).
 
 const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const params = new URLSearchParams(location.search);
@@ -24,7 +24,6 @@ const stage = document.querySelector('.owl-stage');
         // only ready after that, it takes over already folded rather than unfolding
         settled: () => performance.now() > 2400,
         fixedT: params.has('fold') ? parseFloat(params.get('fold')) : undefined,
-        curlScale: params.has('curl') ? parseFloat(params.get('curl')) : undefined,
     });
     if (!owl) throw new Error('no WebGL');
     hero.classList.add('owl-3d');

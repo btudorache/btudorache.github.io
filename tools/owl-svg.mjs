@@ -5,56 +5,69 @@
 //
 //     node tools/owl-svg.mjs
 //
-// The wings are drawn before their final curl: a flat drawing has no depth to curl into.
+// It draws the owl flat, as the last fold leaves it: the body's final curve needs depth.
+// The paper's two colours come from style.css (--owl-front, --owl-back), so the drawing
+// follows the page's light and dark themes.
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { flatState } from '../fold.js';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
-// owl-model.js is a browser module with no imports; load it as one, whatever
-// module type Node would otherwise guess for a .js file here
-const src = readFileSync(root + 'owl-model.js', 'utf8');
-const M = await import('data:text/javascript,' + encodeURIComponent(src));
+const M = await import('../owl-model.js');
 
-const { polys, edges } = M.buildModel({ tessellate: false });
-const N = M.stages.length;
+const model = M.buildModel({ tessellate: false });
+const flat = M.stages.findIndex(st => st.shape);        // the owl as the last fold leaves it
+const k = flat < 0 ? M.stages.length : flat;
 const S = 1000;                                        // model units -> SVG units
 const pt = ([x, y]) => `${Math.round(x * S)},${Math.round(-y * S)}`;
-const hex = c => '#' + c.toString(16).padStart(6, '0');
 
-// the side of each piece that faces the viewer: every mirror flips the paper over
-const flips = p => p.rec.filter(r => r.m).length;
+// painter's order, as the folder sees them, without the pieces that the ones above
+// cover completely (sampled finely: a piece shows if any point inside it does)
+const stack = flatState(model, k);
+const inside = (pts, [x, y]) => {
+    let s = 0;
+    for (let i = 0; i < pts.length; i++) {
+        const a = pts[i], b = pts[(i + 1) % pts.length];
+        const c = (b[0] - a[0]) * (y - a[1]) - (b[1] - a[1]) * (x - a[0]);
+        if (Math.abs(c) < 1e-12) continue;
+        if (s && Math.sign(c) !== s) return false;
+        s = Math.sign(c);
+    }
+    return true;
+};
+const shows = i => {
+    const pts = stack[i].pts, n = pts.length;
+    const c = pts.reduce((m, q) => [m[0] + q[0] / n, m[1] + q[1] / n], [0, 0]);
+    const xs = pts.map(q => q[0]), ys = pts.map(q => q[1]);
+    const samples = [c, ...pts.map(q => [q[0] + (c[0] - q[0]) * 0.02, q[1] + (c[1] - q[1]) * 0.02])];
+    for (let x = Math.min(...xs); x <= Math.max(...xs); x += 0.002)
+        for (let y = Math.min(...ys); y <= Math.max(...ys); y += 0.002) samples.push([x, y]);
+    return samples.some(q => inside(pts, q) && !stack.slice(i + 1).some(o => inside(o.pts, q)));
+};
+const pieces = stack.filter((_, i) => shows(i));
 const edgesOf = new Map();
-for (const e of edges) {
+for (const e of model.edges) {
+    if (e.since >= k) continue;
     if (!edgesOf.has(e.pi)) edgesOf.set(e.pi, []);
     edgesOf.get(e.pi).push(e);
 }
 
-const all = polys.flatMap(p => p.fAt[N]);
+const all = pieces.flatMap(p => p.pts);
 const pad = 0.02;
 const minX = Math.min(...all.map(q => q[0])) - pad, maxX = Math.max(...all.map(q => q[0])) + pad;
 const minY = Math.min(...all.map(q => q[1])) - pad, maxY = Math.max(...all.map(q => q[1])) + pad;
 const vb = [minX * S, -maxY * S, (maxX - minX) * S, (maxY - minY) * S].map(Math.round).join(' ');
 
-// painter's order: lowest layer first
-const order = polys.map((p, i) => i).sort((a, b) => polys[a].layer - polys[b].layer);
 const out = [];
-for (const i of order) {
-    const p = polys[i], f = p.fAt[N];
-    out.push(`<polygon points="${f.map(pt).join(' ')}" fill="${hex(flips(p) % 2 ? M.TERRACOTTA : M.CREAM)}"/>`);
-    const lines = (edgesOf.get(i) || []).map(e => `M${pt(f[e.i])}L${pt(f[e.j])}`).join('');
+for (const pc of pieces) {
+    out.push(`<polygon points="${pc.pts.map(pt).join(' ')}" class="${pc.side === 'front' ? 'f' : 'b'}"/>`);
+    const pi = model.polys.indexOf(pc.poly), f = pc.pts;
+    const lines = (edgesOf.get(pi) || []).map(e => `M${pt(f[e.i])}L${pt(f[e.j])}`).join('');
     if (lines) out.push(`<path d="${lines}"/>`);
 }
 
-// the ink, where the texture puts it once the owl is finished
-const r = M.EYE_R;
-for (const [x, y] of M.EYES_FINAL) {
-    out.push(`<circle cx="${Math.round(x * S)}" cy="${Math.round(-y * S)}" r="${Math.round(r * S)}" fill="${hex(M.INK)}"/>`);
-    out.push(`<circle cx="${Math.round((x - 0.33 * r) * S)}" cy="${Math.round(-(y + 0.33 * r) * S)}" r="${Math.round(0.28 * r * S)}" fill="#fff"/>`);
-}
-out.push(`<polygon points="${M.BEAK_FINAL.map(pt).join(' ')}" fill="${hex(M.BEAK_INK)}" stroke="${hex(M.BEAK_INK)}" stroke-width="${Math.round(0.35 * r * S)}" stroke-linejoin="round"/>`);
-
-// crease and outline paths are styled by style.css (.owl-fallback path)
+// fills and strokes are styled by style.css (.owl-fallback)
 const svg = `<svg class="owl-fallback" viewBox="${vb}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="An origami owl, folded from a square of paper">` +
     out.join('') + '</svg>';
 
@@ -64,4 +77,4 @@ const eol = html.includes('\r\n') ? '\r\n' : '\n';     // keep the file's own li
 const re = /(<!-- owl-svg:start[^>]*-->)[\s\S]*?(<!-- owl-svg:end -->)/;
 if (!re.test(html)) throw new Error('owl-svg markers not found in index.html');
 writeFileSync(file, html.replace(re, `$1${eol}                ${svg}${eol}                $2`));
-console.log(`owl-svg: ${polys.length} pieces, ${svg.length} bytes, viewBox ${vb}`);
+console.log(`owl-svg: ${pieces.length} pieces, ${svg.length} bytes, viewBox ${vb}`);

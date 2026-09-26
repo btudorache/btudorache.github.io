@@ -45,6 +45,9 @@
     --sage-ink: #626e53;
     --blue-ink: #506d87;
     --gold-ink: #826627;
+    /* the owl's paper (owl-model.js): yellow in front, charcoal behind */
+    --owl-front: #e0ac2e;
+    --owl-back: #3a3632;
     --serif: 'Fraunces', Georgia, 'Times New Roman', serif;
     --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
@@ -67,6 +70,7 @@
         --sage-ink: #a8b78f;
         --blue-ink: #94b4d0;
         --gold-ink: #d8b766;
+        --owl-back: #625b53;   /* lighter, so the owl keeps its outline on the dark desk */
     }
 }
 
@@ -168,12 +172,17 @@ a { color: inherit; }
     position: absolute;
     left: 50%;
     top: 52%;
-    width: 62%;
-    height: auto;
+    /* by height: the owl is taller than wide, and the stage is wider than tall; about
+       the 3D owl's size, so the one fades into the other */
+    height: 72%;
+    width: auto;
+    max-width: 100%;
     transform: translate(-50%, -50%);
 }
 
-.owl-fallback path { fill: none; stroke: #2b2721; stroke-opacity: 0.3; stroke-width: 3.5; stroke-linejoin: round; }
+.owl-fallback .f { fill: var(--owl-front); }
+.owl-fallback .b { fill: var(--owl-back); }
+.owl-fallback path { fill: none; stroke: #1f1c19; stroke-opacity: 0.32; stroke-width: 3.5; stroke-linejoin: round; }
 
 .js .owl-fallback { animation: fade-in 0.6s ease 2.5s both; }
 .js .owl-flat .owl-fallback { animation: fade-in 0.6s ease both; }
@@ -282,36 +291,6 @@ section { padding: 70px 0; border-top: 1px solid var(--line); }
 
 /* role="list" on these in the HTML: WebKit stops announcing a list once its bullets go */
 ul, ol { list-style: none; }
-
-/* ---------- Work ---------- */
-.timeline {
-    display: grid;
-    gap: 14px;
-}
-
-.timeline-item {
-    display: grid;
-    grid-template-columns: 9.5rem 1fr;
-    gap: 2px 28px;
-    align-items: baseline;
-}
-
-.timeline-item .when {
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--ink-soft);
-    font-variant-numeric: tabular-nums;
-}
-
-.timeline-item h3 {
-    font-family: var(--serif);
-    font-weight: 600;
-    font-size: 1.2rem;
-    line-height: 1.35;
-}
-
-/* on a narrow screen the line breaks before "at …", never inside the role */
-.timeline-item .where { display: inline-block; font-weight: 400; color: var(--ink-soft); }
 
 /* ---------- Cards ---------- */
 .fold-card {
@@ -470,16 +449,15 @@ ul, ol { list-style: none; }
 
 .fold-card cite { font-style: italic; }
 
-/* breathing circle, the meditation glyph without WebGL: a breath every ten
-   seconds, like the lotus */
+/* the meditation glyph without WebGL: the lotus still breathes, once every ten
+   seconds, as the 3D one opens and closes */
 .breath {
-    border-radius: 50%;
-    border: 2px solid var(--sage);
+    transform-origin: 50% 75%;
     animation: breathe 10s ease-in-out infinite;
 }
 
 @keyframes breathe {
-    0%, 100% { transform: scale(0.7); opacity: 0.55; }
+    0%, 100% { transform: scale(0.86); opacity: 0.8; }
     50% { transform: scale(1); opacity: 1; }
 }
 
@@ -529,7 +507,6 @@ ul, ol { list-style: none; }
     .owl-stage { height: 260px; }
     .hero .role { letter-spacing: 0.16em; }
     .interests-grid { grid-template-columns: 1fr; }
-    .timeline-item { grid-template-columns: 1fr; }
 }
 
 @media print {
